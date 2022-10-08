@@ -10,10 +10,12 @@ import 'package:sqflite/sqflite.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  var databasePath = await getDatabasesPath();
-  var path = join(databasePath, "DEMO.db");
-
-  await databaseFactory.deleteDatabase(path);
+  runApp(
+    MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatefulWidget {
