@@ -1,15 +1,18 @@
+import 'package:camera/camera.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hexcolor/hexcolor.dart';
-import 'package:mylectures/database/database_services.dart';
-import 'package:mylectures/models/model.dart';
-import 'package:mylectures/test_screen.dart';
-import 'package:path/path.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:mylectures/firebase_options.dart';
+import 'package:mylectures/src/folder_content_screen.dart';
+import 'package:mylectures/src/test_screen.dart';
+import 'package:uuid/uuid.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.android);
 
   runApp(
     MaterialApp(
@@ -27,9 +30,6 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  List files = [];
-  TextEditingController folderNameCtr = TextEditingController();
-
   @override
   void initState() {
     super.initState();
@@ -67,22 +67,25 @@ class _MyAppState extends State<MyApp> {
                           ),
                         ),
                         SizedBox(height: 40),
-                        Expanded(
-                          child: GridView.count(
-                            shrinkWrap: true,
-                            crossAxisCount: 3,
-                            mainAxisSpacing: 20,
-                            crossAxisSpacing: 25,
-                            children: [
-                              myColumn(folderName: 'GUI'),
-                              myColumn(folderName: 'Database'),
-                              myColumn(folderName: 'Web'),
-                              myColumn(folderName: 'Robotic'),
-                              myColumn(folderName: 'E-bussines'),
-                              myColumn(folderName: 'Networking'),
-                            ],
-                          ),
-                        ),
+                        // Expanded(
+                        //   child: GridView.count(
+                        //     shrinkWrap: true,
+                        //     crossAxisCount: 3,
+                        //     mainAxisSpacing: 20,
+                        //     crossAxisSpacing: 25,
+                        //     children: [
+                        //       myColumn(folderName: 'gui', context: context),
+                        //       myColumn(
+                        //           folderName: 'database', context: context),
+                        //       myColumn(folderName: 'web', context: context),
+                        //       myColumn(folderName: 'robotic', context: context),
+                        //       myColumn(
+                        //           folderName: 'e-bussines', context: context),
+                        //       myColumn(
+                        //           folderName: 'networking', context: context),
+                        //     ],
+                        //   ),
+                        // ),
                         //* footer section
                         Expanded(
                           child: Container(
@@ -143,103 +146,100 @@ class _MyAppState extends State<MyApp> {
                                 SizedBox(height: 40),
                                 Expanded(
                                   flex: 2,
-                                  child: files.isEmpty == false
-                                      ? GridView.builder(
-                                          shrinkWrap: true,
-                                          gridDelegate:
-                                              const SliverGridDelegateWithFixedCrossAxisCount(
-                                            crossAxisCount: 2,
-                                            mainAxisSpacing: 5,
-                                            crossAxisSpacing: 5,
+                                  child: StreamBuilder(
+                                    stream: FirebaseFirestore.instance
+                                        .collection('folders')
+                                        .snapshots(),
+                                    builder: (BuildContext context,
+                                        AsyncSnapshot snapshot) {
+                                      if (snapshot.data == null) {
+                                        return Text(
+                                            "there is not any folders...");
+                                      } else if (snapshot.hasError) {
+                                        print(snapshot.error.toString());
+                                      } else if (snapshot.connectionState ==
+                                          ConnectionState.waiting) {
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            color: Colors.green,
                                           ),
-                                          itemCount: files.length,
-                                          itemBuilder: (BuildContext context,
-                                              int index) {
-                                            return SizedBox(
-                                              height: 100,
-                                              width: double.maxFinite,
-                                              child: Column(
-                                                children: [
-                                                  GestureDetector(
-                                                    onTap: () {
-                                                      print('hiii');
-                                                    },
-                                                    child: SvgPicture.asset(
-                                                      'images/bxs_folder-open.svg',
-                                                      height: 100,
-                                                      width: 100,
-                                                      color:
-                                                          HexColor('#053936'),
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    files[index],
-                                                    style: GoogleFonts.openSans(
-                                                      color:
-                                                          HexColor('#000000'),
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Text(
-                                                    DateTime.now()
-                                                            .day
-                                                            .toString() +
-                                                        '-' +
-                                                        DateTime.now()
-                                                            .month
-                                                            .toString() +
-                                                        '-' +
-                                                        DateTime.now()
-                                                            .year
-                                                            .toString(),
-                                                    style: GoogleFonts.openSans(
-                                                      color: Colors.grey,
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                  SizedBox(height: 2),
-                                                  Text(
-                                                    '5Mb',
-                                                    style: GoogleFonts.openSans(
-                                                      color: Colors.grey,
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            );
-                                          },
-                                        )
-                                      : Center(
-                                          child: Column(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.center,
-                                            children: [
-                                              SvgPicture.asset(
-                                                'images/fluent_calendar-empty-16-filled.svg',
-                                                color: HexColor('#005936'),
-                                                height: 100,
-                                                width: 100,
-                                              ),
-                                              SizedBox(height: 25),
-                                              Text(
-                                                'There is not any folders . . .',
-                                                style: GoogleFonts.openSans(
-                                                  color: HexColor('#005936'),
-                                                  fontSize: 14,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ],
+                                        );
+                                      }
+                                      if (snapshot.data!.docs.length == 0) {
+                                        return Center(
+                                          child: Text(
+                                            "There is not any folders",
+                                            style: GoogleFonts.openSans(
+                                              color: Colors.grey,
+                                              fontSize: 25,
+                                            ),
                                           ),
+                                        );
+                                      }
+                                      return GridView.builder(
+                                        shrinkWrap: true,
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                          crossAxisCount: 2,
+                                          mainAxisSpacing: 5,
+                                          crossAxisSpacing: 5,
                                         ),
+                                        itemCount: snapshot.data!.docs.length,
+                                        itemBuilder:
+                                            (BuildContext context, int index) {
+                                          return SizedBox(
+                                            height: 100,
+                                            width: double.maxFinite,
+                                            child: Column(
+                                              children: [
+                                                GestureDetector(
+                                                  onTap: () {
+                                                    Navigator.of(context).push(
+                                                      MaterialPageRoute(
+                                                        builder: (context) =>
+                                                            FolderContentScreen(
+                                                          folderTitle: snapshot
+                                                                  .data!
+                                                                  .docs[index]
+                                                              ['folderName'],
+                                                        ),
+                                                      ),
+                                                    );
+                                                  },
+                                                  child: SvgPicture.asset(
+                                                    'images/bxs_folder-open.svg',
+                                                    height: 100,
+                                                    width: 100,
+                                                    color: HexColor('#053936'),
+                                                  ),
+                                                ),
+                                                Text(
+                                                  snapshot.data!.docs[index]
+                                                      ['folderName'],
+                                                  style: GoogleFonts.openSans(
+                                                    color: HexColor('#000000'),
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                                Text(
+                                                  snapshot.data.docs[index]
+                                                      ['createdAt'],
+                                                  style: GoogleFonts.openSans(
+                                                    color: Colors.grey,
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                                SizedBox(height: 2),
+                                              ],
+                                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
                                 ),
                               ],
                             ),
@@ -256,6 +256,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   myDialog(context) {
+    TextEditingController folderNameCtr = TextEditingController();
+
     return showDialog(
       context: context,
       builder: (context) {
@@ -303,10 +305,22 @@ class _MyAppState extends State<MyApp> {
                     SizedBox(
                       width: 100,
                       child: ElevatedButton(
-                        onPressed: () {
-                          files.add(folderNameCtr.text);
-
-                          setState(() {});
+                        onPressed: () async {
+                          String id = const Uuid().v4();
+                          String date = DateTime.now().day.toString() +
+                              '-' +
+                              DateTime.now().month.toString() +
+                              '-' +
+                              DateTime.now().year.toString();
+                          FirebaseFirestore.instance
+                              .collection('folders')
+                              .doc(id)
+                              .set({
+                            'folderName': folderNameCtr.text,
+                            'createdAt': date,
+                            'folderId': id,
+                          });
+                          Navigator.of(context).pop();
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: HexColor('#005936'),
@@ -324,17 +338,14 @@ class _MyAppState extends State<MyApp> {
     );
   }
 
-  myColumn({required String folderName}) {
+  myColumn({required String folderName, context}) {
     return Column(
       children: [
-        GestureDetector(
-          onTap: () {},
-          child: SvgPicture.asset(
-            'images/bxs_folder-open.svg',
-            height: 75,
-            width: 75,
-            color: HexColor('#efead8'),
-          ),
+        SvgPicture.asset(
+          'images/bxs_folder-open.svg',
+          height: 75,
+          width: 75,
+          color: HexColor('#efead8'),
         ),
         Text(
           folderName,

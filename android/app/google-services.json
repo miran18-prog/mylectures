@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1010713767219",
+    "project_id": "mylectures-c895d",
+    "storage_bucket": "mylectures-c895d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1010713767219:android:76fcd43888fae54dcc6246",
+        "android_client_info": {
+          "package_name": "com.example.mylectures"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1010713767219-83jo5qq6402mc033vpsfrukdo3s0isjd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA6Khkct-nY4YZPvX2LkU9BE300CboBG_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1010713767219-83jo5qq6402mc033vpsfrukdo3s0isjd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

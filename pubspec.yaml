@@ -40,6 +40,21 @@ dependencies:
   google_fonts: ^3.0.1
   flutter_svg: ^1.1.5
   sqflite: ^2.1.0
+  uuid: ^3.0.6
+  firebase_core: ^1.24.0
+  firebase_storage: ^10.3.11
+  cloud_firestore: ^3.5.1
+  line_icons: ^2.0.1
+  font_awesome_flutter: ^10.2.1
+  material_design_icons_flutter: ^5.0.6996
+  image_picker: ^0.8.1
+  image_cropper: ^3.0.0
+  camera: ^0.10.0+3
+  path_provider: ^2.0.11
+  path: ^1.8.2
+  provider: ^6.0.4
+  auto_size_text: ^3.0.0
+  cached_network_image: ^3.2.2
 
 dev_dependencies:
   flutter_test:
