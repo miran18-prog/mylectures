@@ -9,10 +9,12 @@ import 'package:mylectures/models/lecture.dart';
 import 'package:uuid/uuid.dart';
 
 class AddImageScreen extends StatefulWidget {
-  const AddImageScreen({super.key, required this.folderTitle});
+  const AddImageScreen(
+      {super.key, required this.folderTitle, required this.CameraOrGallery});
 
   final folderTitle;
-
+  //! camera = 1 , gallery = 0
+  final CameraOrGallery;
   @override
   State<AddImageScreen> createState() => _AddImageScreenState();
 }
@@ -21,7 +23,10 @@ class _AddImageScreenState extends State<AddImageScreen> {
   @override
   File? _image;
   final imageTitleCtrl = TextEditingController();
-
+  bool isLoadind = false;
+  double h = 50;
+  double w = 100;
+  Color bgColor = Colors.green.shade900;
   Widget build(BuildContext context) {
     DateTime dateTime = DateTime.now();
     DateTime now = DateTime.now();
@@ -30,34 +35,44 @@ class _AddImageScreenState extends State<AddImageScreen> {
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
-        iconTheme: IconThemeData(color: Colors.black, size: 30),
+        iconTheme: const IconThemeData(color: Colors.black, size: 30),
       ),
       body: SingleChildScrollView(
         child: Column(
           children: [
-            SizedBox(
+            const SizedBox(
               height: 75,
             ),
             GestureDetector(
               onTap: () async {
-                final image =
-                    await ImagePicker().pickImage(source: ImageSource.camera);
-                if (image == null) return;
-                File? img = File(image.path);
-                setState(() {
-                  this._image = img;
-                });
-                print(_image);
+                if (widget.CameraOrGallery) {
+                  final image = await ImagePicker().pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (image == null) return;
+                  File? img = File(image.path);
+                  setState(() {
+                    this._image = img;
+                  });
+                } else {
+                  final image = await ImagePicker()
+                      .pickImage(source: ImageSource.gallery);
+                  if (image == null) return;
+                  File? img = File(image.path);
+                  setState(() {
+                    this._image = img;
+                  });
+                }
               },
               child: _image == null
                   ? Container(
                       height: 250,
                       width: MediaQuery.of(context).size.width * 0.9,
-                      decoration: BoxDecoration(
+                      decoration: const BoxDecoration(
                         color: Colors.grey,
                       ),
-                      child: Icon(
-                        Icons.add_a_photo,
+                      child: const Icon(
+                        Icons.add,
                         size: 40,
                         color: Colors.white,
                       ),
@@ -73,7 +88,7 @@ class _AddImageScreenState extends State<AddImageScreen> {
                       ),
                     ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 50,
             ),
             Padding(
@@ -85,7 +100,7 @@ class _AddImageScreenState extends State<AddImageScreen> {
                     borderRadius: BorderRadius.circular(10),
                     borderSide: BorderSide(color: Colors.green.shade900),
                   ),
-                  label: Text("Image Title"),
+                  label: const Text("Image Title"),
                   labelStyle: GoogleFonts.openSans(
                     color: Colors.green.shade900,
                   ),
@@ -96,7 +111,7 @@ class _AddImageScreenState extends State<AddImageScreen> {
                 ),
               ),
             ),
-            SizedBox(
+            const SizedBox(
               height: 50,
             ),
             SizedBox(
@@ -116,40 +131,58 @@ class _AddImageScreenState extends State<AddImageScreen> {
                       );
                     return ElevatedButton(
                       onPressed: () async {
-                        print('dddddd');
-                        String id = Uuid().v1();
+                        setState(() {
+                          isLoadind = true;
+                          bgColor = Colors.transparent;
+                        });
+                        String imagePathId = const Uuid().v1();
+                        String documentId = const Uuid().v4();
                         String fileName = 'lecture.jpg';
                         try {
                           if (_image == null) return;
+
                           final ref = FirebaseStorage.instance
                               .ref()
-                              .child('images/$id/$fileName');
+                              .child('images/$imagePathId/$fileName');
 
                           await ref.putFile(_image!);
 
                           String downloadUri = await ref.getDownloadURL();
                           LectureModel lectureModel = LectureModel(
-                              imagePathId: id,
+                              imagePathId: imagePathId,
                               imageUrl: downloadUri,
                               imageTitle: imageTitleCtrl.text,
                               uploadDate: date.toString(),
-                              imageCatygory: widget.folderTitle);
+                              imageCatygory: widget.folderTitle,
+                              documentId: documentId);
                           print(lectureModel);
                           FirebaseFirestore.instance
                               .collection('folders')
                               .doc(snapshot.data!.docs[0]['folderId'])
                               .collection(widget.folderTitle)
-                              .add(lectureModel.toMap());
+                              .doc(documentId)
+                              .set(lectureModel.toMap());
                           Navigator.of(context).pop();
+                          setState(() {
+                            isLoadind = false;
+                            bgColor = Colors.green.shade900;
+                          });
                         } on FirebaseException catch (e) {
                           print(e);
                         }
                       },
-                      child: Text(
-                        ("Add Image"),
-                      ),
                       style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade900),
+                          backgroundColor: bgColor, elevation: 0),
+                      child: !isLoadind
+                          ? const Text(
+                              ("Add Image"),
+                            )
+                          : SizedBox(
+                              width: 35,
+                              child: CircularProgressIndicator(
+                                color: Colors.green,
+                              ),
+                            ),
                     );
                   },
                 ),

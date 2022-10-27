@@ -14,6 +14,7 @@ import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:mylectures/models/lecture.dart';
 import 'package:mylectures/src/add_image_screen.dart';
+import 'package:mylectures/src/zoom_image_screen.dart';
 import 'package:uuid/uuid.dart';
 
 class FolderContentScreen extends StatefulWidget {
@@ -61,16 +62,37 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
               flex: 1,
               child: GestureDetector(
                 onTap: () async {
-                  Navigator.of(context).push(MaterialPageRoute(
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
                       builder: (context) => AddImageScreen(
-                            folderTitle: widget.folderTitle,
-                          )));
+                        folderTitle: widget.folderTitle,
+                        CameraOrGallery: false,
+                      ),
+                    ),
+                  );
                 },
                 child: SvgPicture.asset(
                   'images/image-add-20-filled.svg',
                   height: 30,
                 ),
               ),
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => AddImageScreen(
+                      folderTitle: widget.folderTitle,
+                      CameraOrGallery: true,
+                    ),
+                  ),
+                );
+              },
+              splashColor: Colors.transparent,
+              hoverColor: Colors.transparent,
+              focusColor: Colors.transparent,
+              highlightColor: Colors.transparent,
+              icon: Icon(Icons.add_a_photo),
             )
           ],
         ),
@@ -82,7 +104,7 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             SizedBox(height: 20),
-            StreamBuilder(
+            StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
               stream:
                   FirebaseFirestore.instance.collection('folders').snapshots(),
               builder: (BuildContext context, AsyncSnapshot snapshot) {
@@ -95,7 +117,36 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
                     ConnectionState.waiting) {
                   return Container();
                 }
-                var folderId = snapshot.data!.docs[0]['folderId'];
+
+                //! return all documents from folder collection
+                List ids = snapshot.data!.docs
+                    .map(
+                      (e) => e.data(),
+                    )
+                    .toList();
+
+                var Id =
+                    -1; //! then we chek which index is equal to its own collection id
+                for (int i = 0; i < ids.length; i++) {
+                  if (ids[i]['folderName'] == widget.folderTitle) {
+                    Id = i;
+                  }
+                }
+                //! if the is was -1 it means that there is not any folders in
+                if (Id == -1) {
+                  return Center(
+                    child: Text(
+                      'There is not any images',
+                      style: GoogleFonts.openSans(
+                        fontSize: 25,
+                        color: Colors.grey,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  );
+                }
+
+                var folderId = snapshot.data!.docs[Id]['folderId'];
                 print(folderId);
                 return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
                     stream: FirebaseFirestore.instance
@@ -120,15 +171,7 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
                               ),
                             )
                             .toList();
-                        if (lectureModel.isEmpty) {
-                          return Text(
-                            "There is not any images",
-                            style: GoogleFonts.openSans(
-                              color: Colors.grey,
-                              fontSize: 25,
-                            ),
-                          );
-                        }
+
                         return Expanded(
                           child: GridView.builder(
                             shrinkWrap: true,
@@ -145,14 +188,134 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
                                     mainAxisAlignment:
                                         MainAxisAlignment.spaceEvenly,
                                     children: [
-                                      CachedNetworkImage(
-                                        imageUrl: lectureModel[index].imageUrl!,
-                                        placeholder: (context, url) =>
-                                            CircularProgressIndicator(
-                                          color: Colors.green.shade900,
+                                      GestureDetector(
+                                        onLongPress: () {
+                                          showDialog(
+                                            context: context,
+                                            builder: ((context) => AlertDialog(
+                                                  content: Container(
+                                                    height: 200,
+                                                    width: 300,
+                                                    child: Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .spaceEvenly,
+                                                      children: [
+                                                        Text(
+                                                          "Are you Sure you want to delete this image? ",
+                                                          style: GoogleFonts
+                                                              .openSans(
+                                                            fontSize: 18,
+                                                            color: Colors
+                                                                .green.shade700,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                        Row(
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceEvenly,
+                                                          children: [
+                                                            ElevatedButton(
+                                                              onPressed: () {
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop();
+                                                              },
+                                                              style:
+                                                                  ElevatedButton
+                                                                      .styleFrom(
+                                                                backgroundColor:
+                                                                    Colors.green
+                                                                        .shade900,
+                                                              ),
+                                                              child: Text(
+                                                                  "Cancel"),
+                                                            ),
+                                                            ElevatedButton(
+                                                              onPressed:
+                                                                  () async {
+                                                                String
+                                                                    fileName =
+                                                                    'lecture.jpg';
+
+                                                                FirebaseFirestore
+                                                                    .instance
+                                                                    .collection(
+                                                                        'folders')
+                                                                    .doc(
+                                                                        folderId)
+                                                                    .collection(
+                                                                        widget
+                                                                            .folderTitle)
+                                                                    .doc(lectureModel[
+                                                                            index]
+                                                                        .documentId)
+                                                                    .delete();
+
+                                                                final ref =
+                                                                    FirebaseStorage
+                                                                        .instance
+                                                                        .ref()
+                                                                        .child(
+                                                                            'images/${lectureModel[index].imagePathId}/$fileName');
+                                                                await ref
+                                                                    .delete();
+
+                                                                Navigator.of(
+                                                                        context)
+                                                                    .pop();
+                                                              },
+                                                              style:
+                                                                  ElevatedButton
+                                                                      .styleFrom(
+                                                                backgroundColor:
+                                                                    Colors.green
+                                                                        .shade900,
+                                                              ),
+                                                              child:
+                                                                  Text("Yes"),
+                                                            )
+                                                          ],
+                                                        )
+                                                      ],
+                                                    ),
+                                                  ),
+                                                )),
+                                          );
+                                        },
+                                        onTap: () {
+                                          Navigator.of(context).push(
+                                              MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      ZoomImageScreen(
+                                                          imageUrl:
+                                                              lectureModel[
+                                                                      index]
+                                                                  .imageUrl!)));
+                                        },
+                                        child: Container(
+                                          height: 200,
+                                          width: 200,
+                                          child: CachedNetworkImage(
+                                            fit: BoxFit.cover,
+                                            imageUrl:
+                                                lectureModel[index].imageUrl!,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                              alignment: Alignment.center,
+                                              height: 75,
+                                              width: 75,
+                                              child: CircularProgressIndicator(
+                                                color: Colors.green.shade900,
+                                              ),
+                                            ),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    Icon(Icons.error),
+                                          ),
                                         ),
-                                        errorWidget: (context, url, error) =>
-                                            Icon(Icons.error),
                                       ),
                                       SizedBox(height: 10),
                                       Expanded(
@@ -180,7 +343,7 @@ class _FolderContentScreenState extends State<FolderContentScreen> {
                       return Text(
                         'there is not any images',
                         style: GoogleFonts.openSans(
-                          fontSize: 40,
+                          fontSize: 20,
                           color: Colors.black,
                           fontWeight: FontWeight.w400,
                         ),

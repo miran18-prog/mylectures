@@ -7,12 +7,14 @@ class LectureModel {
   final String? imageTitle;
   final String? uploadDate;
   final String? imageCatygory;
+  final String? documentId;
   LectureModel({
     required this.imagePathId,
     required this.imageUrl,
     required this.imageTitle,
     required this.uploadDate,
     required this.imageCatygory,
+    required this.documentId,
   });
 
   LectureModel copyWith({
@@ -21,6 +23,7 @@ class LectureModel {
     String? imageTitle,
     String? uploadDate,
     String? imageCatygory,
+    String? documentId,
   }) {
     return LectureModel(
       imagePathId: imagePathId ?? this.imagePathId,
@@ -28,6 +31,7 @@ class LectureModel {
       imageTitle: imageTitle ?? this.imageTitle,
       uploadDate: uploadDate ?? this.uploadDate,
       imageCatygory: imageCatygory ?? this.imageCatygory,
+      documentId: documentId ?? this.documentId,
     );
   }
 
@@ -38,6 +42,7 @@ class LectureModel {
       'imageTitle': imageTitle,
       'uploadDate': uploadDate,
       'imageCatygory': imageCatygory,
+      'documentId': documentId,
     };
   }
 
@@ -52,6 +57,8 @@ class LectureModel {
           map['uploadDate'] != null ? map['uploadDate'] as String : null,
       imageCatygory:
           map['imageCatygory'] != null ? map['imageCatygory'] as String : null,
+      documentId:
+          map['documentId'] != null ? map['documentId'] as String : null,
     );
   }
 
@@ -62,7 +69,7 @@ class LectureModel {
 
   @override
   String toString() {
-    return 'LectureModel(imagePathId: $imagePathId, imageUrl: $imageUrl, imageTitle: $imageTitle, uploadDate: $uploadDate, imageCatygory: $imageCatygory)';
+    return 'LectureModel(imagePathId: $imagePathId, imageUrl: $imageUrl, imageTitle: $imageTitle, uploadDate: $uploadDate, imageCatygory: $imageCatygory, documentId: $documentId)';
   }
 
   @override
@@ -73,7 +80,8 @@ class LectureModel {
         other.imageUrl == imageUrl &&
         other.imageTitle == imageTitle &&
         other.uploadDate == uploadDate &&
-        other.imageCatygory == imageCatygory;
+        other.imageCatygory == imageCatygory &&
+        other.documentId == documentId;
   }
 
   @override
@@ -82,6 +90,7 @@ class LectureModel {
         imageUrl.hashCode ^
         imageTitle.hashCode ^
         uploadDate.hashCode ^
-        imageCatygory.hashCode;
+        imageCatygory.hashCode ^
+        documentId.hashCode;
   }
 }
